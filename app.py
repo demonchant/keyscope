@@ -48,6 +48,9 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/health":
             self.respond(200, {"status": "ready", "rpc": "not checked"})
+        elif self.path in ("/dashboard", "/dashboard/"):
+            self.path = "/dashboard.html"
+            super().do_GET()
         elif self.path in ("/", "/index.html", "/dashboard.html", "/style.css", "/app.js", "/policy.mjs", "/keyscope-hero.png"):
             super().do_GET()
         else:
