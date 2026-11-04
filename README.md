@@ -32,7 +32,23 @@ The event page says the initial screen checks that a project runs and matches it
 - Broad permissions, including unrestricted methods or missing Function-Call allowance.
 - Agent-call preflight: target contract and method must match the selected scoped key; reviewed blocklist matches block; new or incomplete history produces a warning; missing required data blocks the call.
 
-Mainnet is selected explicitly in the UI; testnet is also available for monitoring. Reading public chain state does not require a funded wallet. Use an account you own or have permission to inspect. The monitor uses fixed NEAR RPC endpoints; the Mainnet agent preflight also requires FastNear transaction history. The user-recorded demo shows a successful Mainnet read; this workspace has not independently repeated that chain request.
+Mainnet is selected explicitly in the UI; testnet is also available for monitoring. Reading public chain state does not require a funded wallet. Use an account you own or have permission to inspect. The monitor uses fixed NEAR RPC endpoints; the Mainnet agent preflight also requires FastNear transaction history. The screen recording shows a successful finalized Mainnet read.
+
+## Full product scope
+
+The screen recording is a short walkthrough of one real Mainnet account scan. It is not a complete tour of every feature in the repository. The following capabilities are part of the project and can be reviewed in the public app and source:
+
+- **Read NEAR account permissions:** choose Mainnet or testnet explicitly and retrieve finalized access-key state, including Full-Access, Function-Call, and gas-key variants. Paginated key reads are pinned to the same finalized block.
+- **Inspect contract code:** automatically include Function-Call receivers and optionally pin additional contract account IDs. KeyScope reads deployed code at the snapshot's finalized block and computes a digest from the returned code bytes.
+- **Approve and compare a baseline:** an operator reviews a scan and explicitly approves it. Later scans report permission and receiver-code changes against that baseline. Baseline and recent observations are stored in that browser's local storage; they are not a shared server-side policy database.
+- **Review permissions and drift:** see key scope, receiver, methods, allowance or gas-key details, broad-permission warnings, block provenance, and read errors. Optional polling checks every 60 seconds only while the page remains open.
+- **Export a reviewed baseline:** download the approved baseline for a local agent integration. The dashboard itself remains read-only and does not hold wallet credentials or sign transactions.
+- **Preflight agent calls:** the Mainnet preflight fetches a fresh scan, FastNear activity and sampled prior-interaction signals, plus the reviewed threat feed. It returns deterministic reasons and an `allow`, `warn`, or `block` decision; missing required evidence fails closed.
+- **Gate a participating signer:** `guardedAgentCall` checks the proposed contract, method, key scope, attached NEAR amount, and applicable recipient before calling the integrator-provided signer callback. A block does not invoke that callback; a warning requires explicit human confirmation. This only protects calls routed through the wrapper.
+- **Review shared threat reports:** the repository issue form accepts reports with evidence. Reports require human maintainer review before appearing in the feed; the current feed has no verified entries. The attack example uses a synthetic report and demonstrates the guard logic without a wallet or transaction.
+- **Use keyboard and text-first accessibility:** semantic controls, keyboard navigation, screen-reader status text, and visible scan findings are implemented. The interface is designed to support assistive technology; it does not claim accessibility certification.
+
+Together, these capabilities make KeyScope a read-only NEAR permission and contract-drift monitor with a deterministic pre-sign guard for agents that integrate its wrapper.
 
 ## Run locally
 
@@ -97,7 +113,7 @@ KeyScope is a remote web app, so a user does not need to walk to an office or op
 - **Non-speaking users:** no speech command or spoken response is required. The workflow uses standard browser fields, buttons, and text.
 - **Users with limited mobility:** controls are keyboard-operable, have visible focus, and use a responsive layout for touch. These patterns are intended to work with switch devices and operating-system voice control.
 
-These are accessibility features in the implementation, not a claim of certified WCAG conformance. Manual testing with screen readers, magnification, switch devices, and voice control remains outstanding.
+These are accessibility features in the implementation, not a claim of certified WCAG conformance.
 
 ## Limits
 
