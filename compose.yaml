@@ -1,0 +1,44 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    environment:
+      KEYSCOPE_ACCESS_PASSWORD: ${KEYSCOPE_ACCESS_PASSWORD:-}
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+  e2e:
+    build:
+      context: ./e2e
+      dockerfile: Dockerfile
+    init: true
+    ipc: host
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      BASE_URL: http://web:8000
+      E2E_NETWORK: ${E2E_NETWORK:-mainnet}
+      E2E_ACCOUNT: ${E2E_ACCOUNT:-}
+      E2E_CONTRACT: ${E2E_CONTRACT:-}
+      KEYSCOPE_ACCESS_PASSWORD: ${KEYSCOPE_ACCESS_PASSWORD:-}
+    volumes:
+      - ./artifacts/playwright:/tests/artifacts
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=128m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    command: ["npx", "playwright", "test"]

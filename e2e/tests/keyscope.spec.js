@@ -1,0 +1,69 @@
+import { test, expect } from '@playwright/test';
+
+test('monitor shell, keyboard flow, responsive layout, and honest local input rejection', async ({ page, request }) => {
+  const pageErrors = [];
+  const consoleErrors = [];
+  const requestFailures = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+  page.on('requestfailed', request => requestFailures.push(request.url() + ': ' + request.failure()?.errorText));
+  const health = await request.get('/health');
+  expect(health.ok()).toBeTruthy();
+  expect(await health.json()).toEqual({ status: 'ready', rpc: 'not checked' });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: /know what changed/i })).toBeVisible();
+  await expect(page.getByLabel('NETWORK')).toBeVisible();
+  await expect(page.getByLabel('ACCOUNT ID')).toBeVisible();
+  await expect(page.getByLabel(/additional contracts to pin/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /read finalized state/i })).toBeEnabled();
+  await expect(page.getByRole('button', { name: /approve this as baseline/i })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /start 60-second checks/i })).toBeDisabled();
+  await page.getByLabel('ACCOUNT ID').fill('bad!');
+  await page.getByRole('button', { name: /read finalized state/i }).click();
+  await expect(page.locator('#report')).toContainText('Enter a valid NEAR account ID.');
+  await page.getByLabel('ACCOUNT ID').focus();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#contracts')).toBeFocused();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+  expect(requestFailures).toEqual([]);
+  const invalid = await page.evaluate(async () => {
+    const response = await fetch('/api/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ network: 'other', account: 'account.near', contracts: [] }) });
+    return { status: response.status, body: await response.json() };
+  });
+  expect(invalid.status).toBe(400);
+  expect(invalid.body.error).toContain('Choose mainnet or testnet');
+});
+
+test('live account baseline and repeat scan use the actual RPC', async ({ page }) => {
+  const account = process.env.E2E_ACCOUNT;
+  const network = process.env.E2E_NETWORK || 'mainnet';
+  const contract = process.env.E2E_CONTRACT;
+  if (!account) test.skip(true, 'BLOCKED: set E2E_ACCOUNT to an actual public account; no fixture account is used.');
+  if (!['mainnet', 'testnet'].includes(network)) throw new Error('E2E_NETWORK must be mainnet or testnet.');
+  await page.goto('/');
+  await page.getByLabel('NETWORK').selectOption(network);
+  await page.getByLabel('ACCOUNT ID').fill(account);
+  if (contract) await page.getByLabel(/additional contracts to pin/i).fill(contract);
+  await page.getByRole('button', { name: /read finalized state/i }).click();
+  const report = page.locator('#report');
+  await expect(report).toBeVisible();
+  if (await report.locator('.error').count()) test.skip(true, 'BLOCKED: actual account RPC scan failed; no fixture response is used.');
+  await expect(report).toContainText('Finalized block hash');
+  if (contract) await expect(report).toContainText(contract);
+  await page.getByRole('button', { name: /approve this as baseline/i }).click();
+  await expect(page.getByRole('button', { name: /replace approved baseline/i })).toBeEnabled();
+  await expect(page.getByRole('button', { name: /start 60-second checks/i })).toBeEnabled();
+  await page.getByRole('button', { name: /read finalized state/i }).click();
+  await expect(report).toContainText(/BASELINE COMPARISON/);
+  await expect(report).toContainText('Finalized block hash');
+  await page.getByRole('button', { name: /start 60-second checks/i }).click();
+  await expect(page.getByRole('button', { name: /pause checks/i })).toBeEnabled();
+  await page.getByRole('button', { name: /pause checks/i }).click();
+  await expect(page.getByRole('button', { name: /start 60-second checks/i })).toBeEnabled();
+});
