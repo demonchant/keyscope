@@ -51,7 +51,7 @@ class Handler(SimpleHTTPRequestHandler):
         elif self.path in ("/dashboard", "/dashboard/"):
             self.path = "/dashboard.html"
             super().do_GET()
-        elif self.path in ("/", "/index.html", "/dashboard.html", "/style.css", "/app.js", "/policy.mjs", "/keyscope-hero.png"):
+        elif self.path in ("/", "/index.html", "/dashboard.html", "/style.css", "/app.js", "/policy.mjs", "/keyscope-hero.webp", "/threat-feed.json"):
             super().do_GET()
         else:
             self.send_error(404)

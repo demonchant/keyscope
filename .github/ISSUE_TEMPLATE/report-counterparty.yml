@@ -1,0 +1,44 @@
+name: Report a NEAR counterparty
+description: Submit a public account or contract with evidence for community review.
+title: "Threat report: "
+labels: ["threat-report", "needs-review"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Reports are not added to the enforced feed automatically. Include public, independently checkable evidence.
+        Never include private keys, seed phrases, personal information, or unsupported accusations.
+  - type: dropdown
+    id: network
+    attributes:
+      label: Network
+      options: [mainnet, testnet]
+    validations:
+      required: true
+  - type: input
+    id: account
+    attributes:
+      label: Account ID
+      description: Public NEAR account ID to review.
+    validations:
+      required: true
+  - type: input
+    id: contract
+    attributes:
+      label: Contract ID, if relevant
+    validations:
+      required: false
+  - type: input
+    id: evidence
+    attributes:
+      label: Evidence URL
+      description: Link to public, verifiable evidence (for example, a transaction or incident report).
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Why should agents be warned?
+      description: State observable facts and the block or timestamp where possible.
+    validations:
+      required: true

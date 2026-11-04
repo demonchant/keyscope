@@ -12,13 +12,26 @@ test('monitor shell, keyboard flow, responsive layout, and honest local input re
   expect(await health.json()).toEqual({ status: 'ready', rpc: 'not checked' });
 
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: /know what changed/i })).toBeVisible();
+  const hero = page.locator('.hero-image');
+  await expect(hero).toHaveAttribute('src', '/keyscope-hero.webp');
+  expect(await hero.evaluate(image => image.complete && image.naturalWidth > 0)).toBe(true);
+  await page.getByRole('link', { name: /open the dashboard/i }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
   await page.goto('/dashboard');
+  const skipLink = page.getByRole('link', { name: 'Skip to main content' });
+  await skipLink.focus();
+  await expect(skipLink).toBeVisible();
+  await expect(page.getByRole('status')).toContainText('No chain read yet');
+  await expect(page.getByRole('main')).toBeVisible();
   await expect(page.getByRole('heading', { name: /know what changed/i })).toBeVisible();
   await expect(page.getByLabel('NETWORK')).toBeVisible();
   await expect(page.getByLabel('ACCOUNT ID')).toBeVisible();
   await expect(page.getByLabel(/additional contracts to pin/i)).toBeVisible();
   await expect(page.getByRole('button', { name: /read finalized state/i })).toBeEnabled();
   await expect(page.getByRole('button', { name: /approve this as baseline/i })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /export approved baseline/i })).toBeDisabled();
   await expect(page.getByRole('button', { name: /start 60-second checks/i })).toBeDisabled();
   await page.getByLabel('ACCOUNT ID').fill('bad!');
   await page.getByRole('button', { name: /read finalized state/i }).click();
@@ -58,6 +71,7 @@ test('live account baseline and repeat scan use the actual RPC', async ({ page }
   if (contract) await expect(report).toContainText(contract);
   await page.getByRole('button', { name: /approve this as baseline/i }).click();
   await expect(page.getByRole('button', { name: /replace approved baseline/i })).toBeEnabled();
+  await expect(page.getByRole('button', { name: /export approved baseline/i })).toBeEnabled();
   await expect(page.getByRole('button', { name: /start 60-second checks/i })).toBeEnabled();
   await page.getByRole('button', { name: /read finalized state/i }).click();
   await expect(report).toContainText(/BASELINE COMPARISON/);

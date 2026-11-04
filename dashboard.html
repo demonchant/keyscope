@@ -6,20 +6,21 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body class="dashboard-page">
-  <header class="topbar"><a class="brand" href="/" aria-label="KeyScope home"><span class="mark">⌁</span> key<span>scope</span></a><div class="topmeta"><span class="live-dot"></span> READ ONLY <span class="divider">/</span> NEAR ACCESS KEYS</div><a class="event" href="/">HOME ↗</a></header>
-  <main>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="topbar"><a class="brand" href="/" aria-label="KeyScope home"><span class="mark" aria-hidden="true">⌁</span> key<span>scope</span></a><div class="topmeta"><span class="live-dot" aria-hidden="true"></span> READ ONLY <span class="divider" aria-hidden="true">/</span> NEAR ACCESS KEYS</div><nav aria-label="Primary"><a class="event" href="/">HOME <span aria-hidden="true">↗</span></a></nav></header>
+  <main id="main-content" tabindex="-1">
     <section class="intro"><div class="intro-copy-wrap"><p class="eyebrow">KEYSCOPE MONITOR / READ-ONLY</p><h1>NEAR account<br><em>dashboard.</em></h1><p class="intro-copy">Read finalized access-key permissions and receiver contract code. Approve a baseline, then compare another read.</p></div></section>
-    <section class="desk" aria-label="NEAR account monitor">
-      <div class="desk-head"><div><span class="step">01</span><h2>Choose an account</h2></div><span id="rpc-state" class="state"><i></i> NO CHAIN READ YET</span></div>
-      <form id="scan-form">
+    <section class="desk" aria-labelledby="scan-heading">
+      <div class="desk-head"><div><span class="step" aria-hidden="true">01</span><h2 id="scan-heading">Choose an account</h2></div><span id="rpc-state" class="state" role="status" aria-live="polite" aria-atomic="true"><i aria-hidden="true"></i><span id="rpc-state-text">No chain read yet.</span></span></div>
+      <form id="scan-form" aria-busy="false">
         <div class="fields"><label>NETWORK<select id="network"><option value="mainnet">NEAR Mainnet</option><option value="testnet">NEAR Testnet</option></select><small>Explicit network selection; no automatic switching.</small></label><label>ACCOUNT ID<input id="account" required maxlength="64" autocomplete="off" placeholder="your-account.near"><small>Public chain data only. Use an account you own or may inspect.</small></label></div>
         <label class="contracts-label">ADDITIONAL CONTRACTS TO PIN <input id="contracts" maxlength="1400" autocomplete="off" placeholder="contract.near, another.testnet"><small>Optional comma-separated account IDs. Function-Call key receivers are included automatically.</small></label>
-        <div class="actions"><button id="scan" type="submit"><span>Read finalized state</span><span>↗</span></button><button id="save-baseline" class="secondary" type="button" disabled>Approve this as baseline</button><button id="toggle-watch" class="secondary" type="button" disabled>Start 60-second checks</button></div>
-        <p class="fineprint">Direct read-only JSON-RPC · finalized state · no private keys · no transactions</p>
+        <div class="actions"><button id="scan" type="submit"><span>Read finalized state</span><span aria-hidden="true">↗</span></button><button id="save-baseline" class="secondary" type="button" disabled>Approve this as baseline</button><button id="export-baseline" class="secondary" type="button" disabled>Export approved baseline</button><button id="toggle-watch" class="secondary" type="button" disabled>Start 60-second checks</button></div>
+        <p class="fineprint">Direct read-only JSON-RPC · finalized state · no private keys · no transactions. All actions work with keyboard and text; no audio or speech input is required.</p>
       </form>
     </section>
-    <section id="report" class="report" aria-live="polite" hidden></section>
-    <section class="method"><p class="eyebrow">WHAT THE CHECK MEANS</p><p>New or broadened permissions and changed pinned contract code are marked as drift. Removed keys and broad or unbounded permissions are surfaced as warnings. A baseline is stored only in this browser on this device; monitoring runs only while this page is open.</p></section>
+    <section id="report" class="report" role="region" aria-label="Scan report" tabindex="-1" hidden></section>
+    <section class="method"><p class="eyebrow">WHAT THE CHECK MEANS</p><p>New or broadened permissions and changed pinned contract code are marked as drift. Removed keys and broad or unbounded permissions are surfaced as warnings. A baseline is stored only in this browser on this device; monitoring runs only while this page is open. Agent integrations must use the separate preflight wrapper for every signing call; signers outside that wrapper remain unaffected.</p></section>
     <footer><span>KEYSCOPE <b>READ-ONLY MONITOR</b></span><span>NO SIGNER ACCESS</span><a href="https://docs.near.org/protocol/accounts-contracts/access-keys" target="_blank" rel="noreferrer">ACCESS KEY DOCS ↗</a></footer>
   </main>
   <script type="module" src="/app.js"></script>

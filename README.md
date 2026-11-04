@@ -2,7 +2,17 @@
 
 **Live app:** [keyscope.onrender.com](https://keyscope.onrender.com) · [Open the dashboard](https://keyscope.onrender.com/dashboard)
 
-KeyScope is a read-only monitor for NEAR delegated access keys. It reads finalized key permissions and receiver contract code, compares them with a baseline an operator explicitly approves, and reports changes. It does not connect to a wallet, sign transactions, move funds, or prevent another signer from acting. The product is deterministic and uses no AI service or model.
+KeyScope is a NEAR delegated-key monitor with a deterministic pre-sign counterparty guard for agent integrations. The public web app reads finalized permissions and receiver contract code, compares them with an operator-approved baseline, and reports drift. The agent wrapper can block a participating agent's call before it invokes that agent's supplied signer, or require human approval for a warning. KeyScope itself does not connect to a wallet, store signing keys, or submit transactions. The product uses no AI service or model.
+
+## Problem
+
+An agent can be given a NEAR access key so it can call a contract. The operator then needs to know whether that key still has the intended scope, whether the contract code changed, and whether the proposed counterparty has risk signals before the agent acts. A key inventory alone does not compare today's permissions and code with a previously approved state, and a warning shown after signing is too late.
+
+## Solution
+
+KeyScope reads the agent account's finalized access-key state and contract code, then compares those facts with an explicitly approved baseline. Before an integrated agent call, `agent-preflight.mjs` refreshes the scan, loads recipient activity and recent agent interactions from FastNear's Mainnet transaction-history API, and loads the shared reviewed threat feed. `agent-guard.mjs` makes a deterministic `allow`, `warn`, or `block` decision. A required call wrapper refuses to invoke the supplied signer on `block`, asks a human on `warn`, and permits only the matching Function-Call key, receiver contract, and allowed method. Full-Access keys are rejected for agent actions.
+
+The guard only controls an agent that routes every signing call through the wrapper. A separate wallet, process, or signer can bypass it; KeyScope cannot revoke keys or prevent unrelated signers from acting. The wrapper receives the signing callback from the integrating agent and never receives or stores its private key.
 
 ## Why KeyScope is useful
 
@@ -10,7 +20,9 @@ NEAR accounts can have multiple access keys with different permissions. A key ma
 
 The useful distinction is the comparison over time: KeyScope reads the current finalized key state, reads receiver contract code at that same block, then shows changes on a later scan with the block reference. This turns a one-time key inventory into a simple drift-monitoring workflow. It is valuable because it is read-only and does not ask users to connect a wallet or hand over signing authority.
 
-KeyScope is a good fit for the NEAR HACKATHON AI Security & Defense track because it works directly with NEAR access-key permissions, including Function-Call keys used to delegate limited actions. It adds visibility into delegated-key and receiver-code changes. It is intentionally not an AI product, and it does not provide the track prompt's agent-side allow/warn/block enforcement or prevent a signer from acting. Treat it as a monitoring layer, not a security guarantee.
+KeyScope targets the NEAR HACKATHON AI Security & Defense track's function-call-key, policy-engine, counterparty-check, and agent-wrapper requirements. The attack demo exercises a malicious injected instruction against a synthetic test feed; it makes no real payment and uses no AI model, as required by the project's no-AI constraint. The shared feed is populated only after a public report with evidence is reviewed; it currently contains no verified entries. [Track 6 prompt](https://github.com/nearai/near-hackathon-prompt-examples/blob/main/tracks/06-security.md).
+
+The event page says the initial screen checks that a project runs and matches its README; human judges decide, using prior events' technical implementation, design, impact, originality, and sustainability as a guide. It does not publish those dimensions as a current weighted rubric. KeyScope's intended impact is reducing the chance that a participating agent calls a changed or reported counterparty under an unexpectedly broad key. User demand and market uniqueness are not yet validated. [Official event page](https://nearhackathon.com/).
 
 ## What it checks
 
@@ -18,8 +30,9 @@ KeyScope is a good fit for the NEAR HACKATHON AI Security & Defense track becaus
 - Receiver contract code at the same finalized block as the access-key snapshot.
 - New, removed, or changed keys and changed receiver-code digests against a browser-local approved baseline.
 - Broad permissions, including unrestricted methods or missing Function-Call allowance.
+- Agent-call preflight: target contract and method must match the selected scoped key; reviewed blocklist matches block; new or incomplete history produces a warning; missing required data blocks the call.
 
-Mainnet is selected explicitly in the UI; testnet is also available. The app only calls the fixed official NEAR RPC endpoint for the selected network. Reading public chain state does not require a funded wallet. Use an account you own or have permission to inspect. No live mainnet result has been verified in this development environment.
+Mainnet is selected explicitly in the UI; testnet is also available for monitoring. Reading public chain state does not require a funded wallet. Use an account you own or have permission to inspect. The monitor uses fixed NEAR RPC endpoints; the Mainnet agent preflight also requires FastNear transaction history. No live mainnet result has been verified in this development environment.
 
 ## Run locally
 
@@ -29,7 +42,7 @@ Requires Python 3.10+ and outbound HTTPS to NEAR RPC.
 python app.py
 ```
 
-Open `http://127.0.0.1:8000` for the landing page, then choose **Open the dashboard** (or visit `/dashboard`). Select Mainnet, enter an account ID, and choose **Read finalized state**. Review the result before choosing **Approve this as baseline**. A second scan compares the current finalized state with that baseline. History and the baseline remain in this browser's local storage. Optional 60-second polling runs only while the dashboard is open.
+Open `http://127.0.0.1:8000` for the landing page, then choose **Open the dashboard** (or visit `/dashboard`). Select Mainnet, enter an account ID, and choose **Read finalized state**. Review the result before choosing **Approve this as baseline**. A second scan compares the current finalized state with that baseline. History and baseline remain in this browser's local storage. **Export approved baseline** downloads the reviewed JSON for a local agent integration; keep that file private and out of Git. Optional 60-second polling runs only while the dashboard is open.
 
 ## Run with Docker Compose
 
@@ -47,13 +60,41 @@ Open `http://127.0.0.1:8000` for the public landing page. Choose **Open the dash
 python -m py_compile app.py unit-tests\test_account_ids.py
 python -m unittest discover -s unit-tests -p 'test_*.py'
 node unit-tests\policy.test.mjs
+node unit-tests\agent-guard.test.mjs
+node examples\agent-attack-demo.mjs
 ```
 
-The policy suite uses fixed fixtures only for pure comparison logic. It is not live chain evidence. Real browser acceptance uses the pinned Playwright setup in `e2e` and requires a real public account in `E2E_ACCOUNT`; an optional `E2E_CONTRACT` pins a real contract code read. Never use mocked RPC responses to claim a live scan.
+The policy and agent-guard suites use isolated fixed fixtures only for deterministic logic; they are not live chain evidence. `node examples/agent-attack-demo.mjs` prints the simulated injection attempt and confirms that the wrapper does not invoke its signer callback. The demo fixture is not a real account or threat report. Real browser acceptance uses the pinned Playwright setup in `e2e` and requires a real public account in `E2E_ACCOUNT`. Never use mocked RPC responses to claim a live scan.
+
+## Agent integration and data sources
+
+The agent preflight is Mainnet-only and requires all signals before a call. Configure the integrator with the public KeyScope URL, agent account, an operator-approved baseline exported from the dashboard, the proposed contract/recipient/method, and the agent's externally managed Function-Call signer callback. Call `guardedAgentCall` for every agent action; do not call the signer directly. The wrapper fails closed if the scan, approved baseline, FastNear history, or shared feed is unavailable. The browser dashboard remains read-only and does not connect the agent wallet.
+
+| Track prompt requirement | KeyScope implementation |
+| --- | --- |
+| Return allow, warn, or block before an agent action | `evaluateAgentCall` derives a deterministic decision from the fresh scan, approved baseline, history signals, and shared feed. |
+| Refuse to sign on block and ask a human on warn | `runGuardedCall` does not invoke the supplied signer on block; warnings require `confirmWarning(...) === true`. |
+| Use one-contract Function-Call keys, never Full-Access keys | The guard requires the selected public key to be a Function-Call key scoped to the exact contract and method. It requires zero attached NEAR and checks FT recipient arguments against the recipient assessed. |
+| Demonstrate an injection attempt against a reported address | `examples/agent-attack-demo.mjs` uses a deterministic simulated agent and a synthetic threat-feed fixture. It never connects to a wallet or sends a transaction. |
+| Use an evidence-backed shared report feed | Every guard decision loads `threat-feed.json`. Reports enter through the GitHub issue form and require maintainer review before the feed changes. The current feed has no verified entries. |
+| Describe data sources and failure handling | Sources and limits are listed below; missing required data blocks the guarded call. |
+
+For a live agent, its wallet library must provide the external signer callback and use exactly the guarded request fields and public key it receives. KeyScope never imports the wallet credentials. The wrapper cannot stop an application that bypasses it or uses a separate signer.
+
+- Finalized permissions, receiver code, and code digest: fixed NEAR Mainnet JSON-RPC through KeyScope's server.
+- Activity age/count and recent interactions: [FastNear Transactions API](https://tx.main.fastnear.com/), using the documented account-history and transaction-lookup endpoints. “Age” means earliest observed indexed activity, not a proven account-creation date. Interaction checks inspect at most the 20 most recent transaction hashes returned for the agent, so a missing match means “not found in this sample,” not “never interacted.” FastNear is an external provider; an unavailable or malformed response blocks the guarded call. The service is credited here as required by its API documentation.
+- Shared reports: `threat-feed.json`, served by KeyScope and checked on every guarded call. Anyone can submit a report with evidence through the repository's **Report a NEAR counterparty** issue form. A maintainer must verify evidence and update the reviewed feed; a report is never auto-blocked solely because it was submitted.
+- Contract-code change: current code hash compared with the operator-approved baseline at the same finalized block as the key scan.
+
+Function-Call keys can call only one receiver contract, optionally only listed methods, cannot attach NEAR, and can stop working when their allowance is exhausted. KeyScope rejects Full-Access keys for agent actions and warns on all-method or unbounded-allowance Function-Call keys. It does not inspect contract semantics or establish that a receiver is honest.
+
+## Accessibility
+
+People who cannot walk can use KeyScope remotely from a phone, tablet, or computer; visiting an office or operating a physical device is not part of the workflow. The web interface supports keyboard navigation with a skip link and visible focus, labeled form controls, screen-reader status announcements, table headers, and text-based results. Color is not the only way scan status is communicated. No audio, speech, or spoken response is required. Larger targets and responsive layout support touch, switch access, and operating-system voice control. These are intended compatibility features, not a claim of certified WCAG conformance; manual testing with screen readers, switch devices, and voice control remains outstanding.
 
 ## Limits
 
-KeyScope is an observation tool, not an enforcement gateway or security guarantee. Baselines and history are editable local browser data. The monitor cannot revoke keys or stop a signer, and polling stops when the page closes. A drift demo requires an exact account-owner-authorized chain change and real before/after reads; a no-drift repeat is a valid demo.
+The dashboard is an observation tool, not an account-wide enforcement gateway or security guarantee. The agent wrapper gates only calls routed through it; it cannot revoke keys or stop a separate signer. Baselines and history are editable local browser data, and polling stops when the dashboard closes. A drift demo requires an exact account-owner-authorized chain change and real before/after reads; a no-drift repeat is a valid demo.
 
 ## NEAR references
 
