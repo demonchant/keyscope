@@ -19,7 +19,7 @@ Requires Python 3.10+ and outbound HTTPS to NEAR RPC.
 python app.py
 ```
 
-Open `http://127.0.0.1:8000`, select Mainnet, enter an account ID, and choose **Read finalized state**. Review the result before choosing **Approve this as baseline**. A second scan compares the current finalized state with that baseline. History and the baseline remain in this browser's local storage. Optional 60-second polling runs only while the page is open.
+Open `http://127.0.0.1:8000` for the landing page, then choose **Open the dashboard** (or visit `/dashboard.html`). Select Mainnet, enter an account ID, and choose **Read finalized state**. Review the result before choosing **Approve this as baseline**. A second scan compares the current finalized state with that baseline. History and the baseline remain in this browser's local storage. Optional 60-second polling runs only while the dashboard is open.
 
 ## Run with Docker Compose
 
@@ -29,7 +29,7 @@ Run:
 docker compose up --build
 ```
 
-Open `http://127.0.0.1:8000`. There is no login or password: anyone with the hosted URL can use the read-only app. Public deployments should use HTTPS; `render.yaml` prepares a Render Blueprint. Scans are rate-limited per client and across the server to protect the public RPC service.
+Open `http://127.0.0.1:8000` for the public landing page. Choose **Open the dashboard** to use the monitor at `/dashboard.html`. There is no login or password: anyone with the hosted URL can use the read-only app. Public deployments should use HTTPS; `render.yaml` prepares a Render Blueprint. Scans are rate-limited per client and across the server to protect the public RPC service.
 
 ## Verify
 

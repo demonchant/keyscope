@@ -12,7 +12,7 @@ test('monitor shell, keyboard flow, responsive layout, and honest local input re
   expect(await health.json()).toEqual({ status: 'ready', rpc: 'not checked' });
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
+  await page.goto('/dashboard.html');
   await expect(page.getByRole('heading', { name: /know what changed/i })).toBeVisible();
   await expect(page.getByLabel('NETWORK')).toBeVisible();
   await expect(page.getByLabel('ACCOUNT ID')).toBeVisible();
@@ -46,7 +46,7 @@ test('live account baseline and repeat scan use the actual RPC', async ({ page }
   const contract = process.env.E2E_CONTRACT;
   if (!account) test.skip(true, 'BLOCKED: set E2E_ACCOUNT to an actual public account; no fixture account is used.');
   if (!['mainnet', 'testnet'].includes(network)) throw new Error('E2E_NETWORK must be mainnet or testnet.');
-  await page.goto('/');
+  await page.goto('/dashboard.html');
   await page.getByLabel('NETWORK').selectOption(network);
   await page.getByLabel('ACCOUNT ID').fill(account);
   if (contract) await page.getByLabel(/additional contracts to pin/i).fill(contract);
