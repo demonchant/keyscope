@@ -4,8 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile
     init: true
-    environment:
-      KEYSCOPE_ACCESS_PASSWORD: ${KEYSCOPE_ACCESS_PASSWORD:-}
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=16m
@@ -33,7 +31,6 @@ services:
       E2E_NETWORK: ${E2E_NETWORK:-mainnet}
       E2E_ACCOUNT: ${E2E_ACCOUNT:-}
       E2E_CONTRACT: ${E2E_CONTRACT:-}
-      KEYSCOPE_ACCESS_PASSWORD: ${KEYSCOPE_ACCESS_PASSWORD:-}
     volumes:
       - ./artifacts/playwright:/tests/artifacts
     read_only: true

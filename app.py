@@ -2,7 +2,7 @@
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import base64
 import hashlib
-import hmac
+import ipaddress
 import json
 import os
 import re
@@ -19,8 +19,10 @@ RPC = {
 MAX_BODY = 16_384
 # A 4 MiB NEAR contract expands to about 5.6 MB when base64-encoded in JSON.
 MAX_RESPONSE = 6_000_000
-MAX_SCANS_PER_MINUTE = 12
+MAX_SCANS_PER_MINUTE = 120
+MAX_CLIENT_SCANS_PER_MINUTE = 6
 SCAN_TIMES = deque()
+CLIENT_SCAN_TIMES = {}
 SCAN_LOCK = threading.Lock()
 ACCOUNT = re.compile(r"^(?:[a-z0-9]+[-_])*[a-z0-9]+(?:\.(?:[a-z0-9]+[-_])*[a-z0-9]+)*$|^(?:[0-9a-f]{64}|0x[0-9a-f]{40}|0s[0-9a-f]{40})$")
 
@@ -39,28 +41,19 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 RPC_OPENER = urllib.request.build_opener(NoRedirect)
-ACCESS_PASSWORD = os.environ.get("KEYSCOPE_ACCESS_PASSWORD", "")
-
-
 class Handler(SimpleHTTPRequestHandler):
     def do_HEAD(self):
-        if not self.authorized():
-            return
         self.send_error(405, "HEAD is not supported")
 
     def do_GET(self):
         if self.path == "/health":
             self.respond(200, {"status": "ready", "rpc": "not checked"})
         elif self.path in ("/", "/index.html", "/style.css", "/app.js", "/policy.mjs"):
-            if not self.authorized():
-                return
             super().do_GET()
         else:
             self.send_error(404)
 
     def do_POST(self):
-        if not self.authorized():
-            return
         if self.path != "/api/scan":
             self.send_error(404)
             return
@@ -208,37 +201,30 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
-    def authorized(self):
-        if not ACCESS_PASSWORD:
-            return True
-        supplied = self.headers.get("Authorization", "")
-        try:
-            scheme, token = supplied.split(" ", 1)
-            if scheme.lower() != "basic":
-                raise ValueError("Unsupported authorization scheme")
-            credentials = base64.b64decode(token, validate=True).decode("utf-8")
-        except (ValueError, UnicodeDecodeError):
-            credentials = ""
-        if hmac.compare_digest(credentials, "keyscope:" + ACCESS_PASSWORD):
-            return True
-        body = b"Authentication required.\n"
-        self.send_response(401)
-        self.send_header("WWW-Authenticate", 'Basic realm="KeyScope", charset="UTF-8"')
-        self.send_header("Content-Type", "text/plain; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(body)
-        return False
-
     def scan_rate_allowed(self):
         now = time.monotonic()
+        client = self.client_address[0]
+        # Render documents X-Forwarded-For as its client-IP header. Only accept
+        # a syntactically valid first address; otherwise use the socket peer.
+        forwarded = self.headers.get("X-Forwarded-For", "").split(",", 1)[0].strip()
+        if forwarded:
+            try:
+                client = str(ipaddress.ip_address(forwarded))
+            except ValueError:
+                pass
         with SCAN_LOCK:
             while SCAN_TIMES and now - SCAN_TIMES[0] >= 60:
                 SCAN_TIMES.popleft()
-            if len(SCAN_TIMES) >= MAX_SCANS_PER_MINUTE:
+            times = CLIENT_SCAN_TIMES.setdefault(client, deque())
+            while times and now - times[0] >= 60:
+                times.popleft()
+            if len(SCAN_TIMES) >= MAX_SCANS_PER_MINUTE or len(times) >= MAX_CLIENT_SCANS_PER_MINUTE:
                 return False
             SCAN_TIMES.append(now)
+            times.append(now)
+            if len(CLIENT_SCAN_TIMES) > 2048:
+                for address in [address for address, recent in CLIENT_SCAN_TIMES.items() if not recent or now - recent[-1] >= 60]:
+                    CLIENT_SCAN_TIMES.pop(address, None)
             return True
 
     def end_headers(self):
@@ -262,7 +248,5 @@ if __name__ == "__main__":
         raise SystemExit("PORT must be an integer from 1 to 65535") from exc
     if not 1 <= port <= 65535:
         raise SystemExit("PORT must be an integer from 1 to 65535")
-    if host == "0.0.0.0" and len(ACCESS_PASSWORD) < 32:
-        raise SystemExit("KEYSCOPE_ACCESS_PASSWORD must be at least 32 characters when binding to 0.0.0.0")
     print("KeyScope available at http://%s:%s" % (host, port))
     ThreadingHTTPServer((host, port), Handler).serve_forever()

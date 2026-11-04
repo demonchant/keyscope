@@ -9,5 +9,3 @@ services:
     envVars:
       - key: KEYSCOPE_HOST
         value: 0.0.0.0
-      - key: KEYSCOPE_ACCESS_PASSWORD
-        generateValue: true

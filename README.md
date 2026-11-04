@@ -23,13 +23,13 @@ Open `http://127.0.0.1:8000`, select Mainnet, enter an account ID, and choose **
 
 ## Run with Docker Compose
 
-Copy `.env.example` to `.env`, set a unique `KEYSCOPE_ACCESS_PASSWORD` of at least 32 characters, then run:
+Run:
 
 ```powershell
 docker compose up --build
 ```
 
-Open `http://127.0.0.1:8000`. The app uses HTTP Basic Authentication with username `keyscope`. Keep the password out of source control. Public hosting must provide HTTPS; `render.yaml` prepares a Render Blueprint and generates the access password on the host.
+Open `http://127.0.0.1:8000`. There is no login or password: anyone with the hosted URL can use the read-only app. Public deployments should use HTTPS; `render.yaml` prepares a Render Blueprint. Scans are rate-limited per client and across the server to protect the public RPC service.
 
 ## Verify
 
