@@ -67,6 +67,7 @@ test('live account baseline and repeat scan use the actual RPC', async ({ page }
   const report = page.locator('#report');
   await expect(report).toBeVisible();
   if (await report.locator('.error').count()) test.skip(true, 'BLOCKED: actual account RPC scan failed; no fixture response is used.');
+  await expect(page.getByRole('button', { name: /approve this as baseline/i })).toBeEnabled();
   await expect(report).toContainText('Finalized block hash');
   if (contract) await expect(report).toContainText(contract);
   await page.getByRole('button', { name: /approve this as baseline/i }).click();

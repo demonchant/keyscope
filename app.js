@@ -50,14 +50,19 @@ function render(scan, baseline, issues, history) {
     '<div class="keys"><h3>Access keys <span>' + scan.keys.length + '</span></h3><div class="table-wrap" role="region" aria-label="Access key permissions table" tabindex="0"><table><caption class="sr-only">Access keys and their NEAR permissions</caption><thead><tr><th scope="col">PUBLIC KEY</th><th scope="col">PERMISSION</th><th scope="col">RECEIVER</th><th scope="col">METHODS</th><th scope="col">GAS BUDGET / KEY BALANCE</th></tr></thead><tbody>' + keys + '</tbody></table></div></div>' +
     '<div class="code-list"><h3>Observed receiver code</h3>' + code + '</div>' +
     '<div class="provenance"><b>Source</b> <a href="' + esc(scan.source) + '" target="_blank" rel="noreferrer">' + esc(scan.source) + '</a> · read-only JSON-RPC · account ' + esc(scan.account) + '<br><b>Finalized block hash</b> <code>' + esc(scan.blockHash || 'not supplied') + '</code><br><b>History</b> ' + history + ' recent observations stored in this browser. Timestamp is local observation time; key list and code reads are pinned to the same finalized block.</div>';
-  baselineButton.disabled = !scan.keys || busy;
-  exportButton.disabled = !baseline || busy;
   baselineButton.textContent = baseline ? 'Replace approved baseline' : 'Approve this as baseline';
-  $('toggle-watch').disabled = !baseline || busy;
+  updateActionButtons();
 }
 function getRecord(network, account) {
   try { return JSON.parse(localStorage.getItem(storageKey(network, account)) || '{}'); }
   catch { return {}; }
+}
+function updateActionButtons() {
+  const baseline = latest ? getRecord(latest.network, latest.account).baseline : null;
+  baselineButton.disabled = !latest?.keys || busy;
+  exportButton.disabled = !baseline || busy;
+  baselineButton.textContent = baseline ? 'Replace approved baseline' : 'Approve this as baseline';
+  $('toggle-watch').disabled = !baseline || busy;
 }
 function stopWatch() {
   if (watchTimer) clearInterval(watchTimer);
@@ -67,7 +72,7 @@ function stopWatch() {
 function invalidateSnapshot() {
   const hadSnapshot = latest !== null;
   latest = null;
-  baselineButton.disabled = true;
+  updateActionButtons();
   stopWatch();
   report.hidden = true;
   if (hadSnapshot) setState('Selection changed. Read again before using the result.');
@@ -106,7 +111,7 @@ async function scan(showErrors = true) {
     setState('Finalized state read. ' + (blocks ? blocks + ' blocking drifts found.' : 'Review the scan report below.'), blocks ? 'fail' : 'ok');
   } catch (error) {
     latest = null;
-    baselineButton.disabled = true;
+    updateActionButtons();
     setState('Chain read failed. ' + error.message, 'fail');
     report.hidden=false;
     report.innerHTML='<div class="error" role="alert"><b>No successful check.</b><br>' + esc(error.message) + '<p>Previous observations are not represented as current.</p></div>';
@@ -114,6 +119,7 @@ async function scan(showErrors = true) {
     busy = false;
     form.setAttribute('aria-busy', 'false');
     $('scan').disabled = false;
+    updateActionButtons();
   }
 }
 form.addEventListener('submit', event => { event.preventDefault(); scan(); });
