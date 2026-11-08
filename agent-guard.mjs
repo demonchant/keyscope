@@ -59,8 +59,14 @@ export function evaluateAgentCall(context, {allowFixtureFeed = false} = {}) {
       if (key.allowance === null || key.allowance === undefined) warn.push(finding('unbounded_gas', 'This Function-Call key has no gas allowance ceiling.'));
     }
     if (action.depositYocto !== '0') block.push(finding('deposit_forbidden', 'Function-Call keys cannot attach NEAR; this guarded call requires zero attached deposit.'));
-    if (scan.codeBytes[action.contractId] === undefined) block.push(finding('contract_unchecked', 'The target contract code was not included in the finalized scan.'));
-    else if (scan.codeBytes[action.contractId] === 0) block.push(finding('not_a_contract', 'The target has no contract code at the scanned block.'));
+    const codeBytes = scan.codeBytes[action.contractId];
+    const codeDigest = scan.codeSha256[action.contractId];
+    if (!Number.isSafeInteger(codeBytes) || codeBytes < 0 ||
+        typeof codeDigest !== 'string' || !/^[a-f0-9]{64}$/i.test(codeDigest)) {
+      block.push(finding('contract_unchecked', 'A valid target contract code size and digest are required in the finalized scan.'));
+    } else if (codeBytes === 0) {
+      block.push(finding('not_a_contract', 'The target has no contract code at the scanned block.'));
+    }
   }
   if (!validThreatFeed(threatFeed, allowFixtureFeed)) {
     block.push(finding('threat_feed_invalid', 'The shared threat feed is missing or malformed; signing is disabled.'));

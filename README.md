@@ -1,14 +1,24 @@
 # KeyScope
 
-**NEAR HACKATHON 2026 · Track 06: AI Security & Defense**  
-**Live app:** https://keyscope.onrender.com  
-**Dashboard:** https://keyscope.onrender.com/dashboard
+**NEAR HACKATHON 2026 · Track 06: AI Security & Defense**
 
-KeyScope is a NEAR delegated-key monitor and deterministic pre-signing security guard for agent integrations. It reads finalized account permissions and receiver contract code, compares them with an operator-approved baseline, and evaluates a proposed agent call before the integrating application invokes its signer.
+**Theme:** Give agents room to act without giving them the keys to everything.
 
-The guard returns `ALLOW`, `WARN`, or `BLOCK`. A blocked call never reaches the supplied signer callback. A warning requires explicit human approval. The agent integration must use a NEAR Function-Call access key scoped to the target contract; Full-Access keys are rejected for guarded agent actions.
+**Try it:** [Live dashboard](https://keyscope.onrender.com/dashboard) · [Project site](https://keyscope.onrender.com)
 
-> **Important scope statement:** KeyScope does not use an AI model, connect to a wallet, hold private keys, or submit transactions. The repository contains a deterministic prompt-injection attack simulation and automated tests of the agent-wrapper boundary. It does **not** claim that a live LLM or production wallet adapter has been integrated and tested. The shared threat-feed matching logic is tested with synthetic fixtures; the committed production feed is currently empty. These distinctions are intentional and are documented so a reviewer can reproduce exactly what the project demonstrates.
+## Give an agent permission to act. Keep the permission narrow.
+
+An agent with a NEAR key can call a contract. If that key is broader than intended, the contract changes, or a recipient raises a risk signal, an operator needs a chance to catch it **before the signer is called**.
+
+**KeyScope checks those boundaries before an integrated agent call.** It reads finalized NEAR access-key permissions and receiver contract code, compares them with an operator-approved baseline, and gathers counterparty signals. Its deterministic policy returns `ALLOW`, `WARN`, or `BLOCK`:
+
+- **ALLOW** — the call matches the approved key scope and available checks.
+- **WARN** — a risk signal needs human approval before the signer callback runs.
+- **BLOCK** — the call is refused before the signer callback runs.
+
+Guarded actions require a NEAR Function-Call key scoped to the target contract and method. Full-Access keys are rejected. KeyScope is read-only: it does not hold keys, connect to a wallet, or submit transactions.
+
+> **What this build demonstrates:** a NEAR permission and code-drift monitor, a deterministic pre-signing policy wrapper, and a reproducible simulated prompt-injection scenario. It does not include a live LLM, production agent runtime, or production wallet adapter. The wrapper is exercised with a supplied test signer callback; live agent-to-wallet integration remains for a consuming application. Threat-feed behavior is tested with synthetic records, and the committed feed is currently empty.
 
 ---
 
@@ -267,13 +277,13 @@ Playwright output, screenshots, traces, and the HTML report are written under `e
 
 ## Current demo: what the recording proves
 
-The 1:58 screen recording captured November 4, 2026 shows a user action followed by a finalized Mainnet scan, its RPC source and block reference, one Full-Access key, and a report labeled baseline comparison. The inspected account had no Function-Call key, so no receiver contract was available for an automatic code read. The optional manual contract field was empty, so no receiver-code digest appears in that recording.
+The 1:52.7 submission video combines two screen recordings captured November 4, 2026. The first shows a finalized Mainnet scan, its RPC source and block reference, one Full-Access key, and the baseline-review report. The second pins `wrap.near`, displays 185,625 returned code bytes and the SHA-256 digest, and shows finalized block provenance in the baseline-comparison view. The inspected account had no Function-Call key, so the contract was added through **Additional contracts to pin**. The video demonstrates a code digest and comparison workflow; it does not show a code-change event. It also does not show an AI agent using the account, a real threat-feed match, or a live agent signer being blocked. A Full-Access key on the inspected account is evidence of that permission on that account; it is not evidence that the key was misused or delegated to an agent.
 
-The recording therefore demonstrates a real finalized Mainnet permission read and baseline comparison on the inspected account. It does **not** demonstrate contract-code drift, an AI agent using the account, a real threat-feed match, or a live agent signer being blocked. A Full-Access key on the inspected account is evidence of that permission on that account; it is not evidence that the key was misused or delegated to an agent.
+The narration identifies NEAR Mainnet as the source of the on-chain permission data and names the NEAR HACKATHON AI Security & Defense track. The post must say the project was built at NEAR HACKATHON, tag `@NEARProtocol`, and include `#NEARHackathon`; confirm its publication status before submission.
 
-To inspect contract code in the dashboard, enter an account and put a contract account ID in **Additional contracts to pin**, then select **Read finalized state**. Review the code digest, approve the baseline, and read again. The contract read is pinned to the finalized block used for the key snapshot. An unchanged digest is a valid comparison result. To demonstrate code drift, only compare after the contract owner authorizes a specific code change.
+Judges and users can try contract digesting in the live dashboard with a deployed Mainnet contract they are permitted to inspect. Open the dashboard, enter the account to monitor, put the contract account ID in **Additional contracts to pin**, and select **Read finalized state**. Review the observed digest, approve the baseline, then read again to compare. The contract read is pinned to the finalized block used for the key snapshot. An unchanged digest is a valid comparison result.
 
-The deterministic attack demo is separate from the screen recording. Run `node examples/agent-attack-demo.mjs` to reproduce the synthetic threat-feed match and verify that the signer callback is not invoked.
+The deterministic attack demo is separate from the screen recording. Run `node examples/agent-attack-demo.mjs` to reproduce the synthetic threat-feed match and verify that the signer callback is not invoked. This is a test-signer demonstration, not a live wallet integration.
 
 ## Accessibility
 
@@ -294,7 +304,6 @@ These are implemented accessibility features, not a claim of certified WCAG conf
 
 ## Repository map
 
-<<<<<<< Updated upstream
 | Path | Purpose |
 |---|---|
 | `app.py` | Python standard-library HTTP server and NEAR scan API. |
@@ -307,17 +316,6 @@ These are implemented accessibility features, not a claim of certified WCAG conf
 | `e2e/` | Playwright browser acceptance tests, including optional live chain scan. |
 | `.github/ISSUE_TEMPLATE/report-counterparty.yml` | Evidence-backed counterparty report intake form. |
 | `Dockerfile`, `compose.yaml`, `render.yaml` | Container and deployment configuration. |
-=======
-### What the current demo shows
-
-The 1:52.7 submission video combines two screen recordings captured November 4, 2026. The first shows a finalized Mainnet scan, its RPC source and block reference, one Full-Access key, and the baseline-review report. The second pins `wrap.near`, displays 185,625 returned code bytes and the SHA-256 digest, and shows finalized block provenance in the baseline-comparison view. The inspected account had no Function-Call key, so the contract was added through **Additional contracts to pin**. The video demonstrates a code digest and comparison workflow; it does not show a code-change event. It also does not show an AI agent using the account, a real threat-feed match, or a live agent signer being blocked. A Full-Access key on the inspected account is evidence of that permission on that account; it is not evidence that the key was misused or delegated to an agent.
-
-The narration identifies NEAR Mainnet as the source of the on-chain permission data and names the NEAR HACKATHON AI Security & Defense track. The combined video is ready for the demo post; a public post has not yet been published. The hackathon guide requires the demo post to include video or screenshots and a complete action/result; it does not state a maximum video duration. The post must say the project was built at NEAR HACKATHON, tag `@NEARProtocol`, and include `#NEARHackathon`.
-
-Judges and users can try contract digesting in the live dashboard with any deployed Mainnet contract they are permitted to inspect. Open the dashboard, enter the account to monitor, put the contract account ID in **Additional contracts to pin**, and select **Read finalized state**. Review the observed code digest, select **Approve this as baseline**, then read again to compare the current digest with that saved baseline. The contract read is pinned to the finalized block used for the key snapshot. Baseline and history are saved in that browser's local storage. The submission video demonstrates this flow with `wrap.near`; no contract change is needed to see a valid digest comparison.
-
-To demonstrate code drift, only compare after the contract owner authorizes a specific code change. To demonstrate agent enforcement, integrate a Function-Call signer adapter and route every agent signing request through `guardedAgentCall`; show the returned decision and confirm a blocked request never calls the signer. The isolated guard test is not a substitute for this live integration test.
->>>>>>> Stashed changes
 
 ## NEAR references
 

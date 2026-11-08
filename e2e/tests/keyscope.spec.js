@@ -25,7 +25,7 @@ test('monitor shell, keyboard flow, responsive layout, and honest local input re
   await expect(skipLink).toBeVisible();
   await expect(page.getByRole('status')).toContainText('No chain read yet');
   await expect(page.getByRole('main')).toBeVisible();
-  await expect(page.getByRole('heading', { name: /know what changed/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /NEAR account dashboard/i })).toBeVisible();
   await expect(page.getByLabel('NETWORK')).toBeVisible();
   await expect(page.getByLabel('ACCOUNT ID')).toBeVisible();
   await expect(page.getByLabel(/additional contracts to pin/i)).toBeVisible();

@@ -54,8 +54,16 @@ function render(scan, baseline, issues, history) {
   updateActionButtons();
 }
 function getRecord(network, account) {
-  try { return JSON.parse(localStorage.getItem(storageKey(network, account)) || '{}'); }
-  catch { return {}; }
+  try {
+    const value = JSON.parse(localStorage.getItem(storageKey(network, account)) || '{}');
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    return {
+      ...value,
+      history: Array.isArray(value.history) ? value.history : []
+    };
+  } catch {
+    return {};
+  }
 }
 function updateActionButtons() {
   const baseline = latest ? getRecord(latest.network, latest.account).baseline : null;

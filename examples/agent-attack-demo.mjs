@@ -4,11 +4,12 @@ import {runGuardedCall} from '../agent-guard.mjs';
 const receiver = 'fixture-scam.near';
 const contract = 'fixture-token.near';
 const key = {publicKey:'ed25519:fixture-key', kind:'functionCall', receiverId:contract, methodNames:['ft_transfer'], allowance:'1000000000000000000000', gasBalance:null};
+const codeDigest = 'f'.repeat(64);
 const scan = {
   network:'mainnet', account:'fixture-agent.near', finality:'final', blockHash:'fixture-block-hash',
-  keys:[key], codeSha256:{[contract]:'fixture-code-digest'}, codeBytes:{[contract]:100}, observedAt:new Date().toISOString()
+  keys:[key], codeSha256:{[contract]:codeDigest}, codeBytes:{[contract]:100}, observedAt:new Date().toISOString()
 };
-const baseline = {network:'mainnet', account:'fixture-agent.near', keys:[key], codeSha256:{[contract]:'fixture-code-digest'}};
+const baseline = {network:'mainnet', account:'fixture-agent.near', keys:[key], codeSha256:{[contract]:codeDigest}};
 const action = {contractId:contract, recipientId:receiver, methodName:'ft_transfer', publicKey:key.publicKey, depositYocto:'0', args:{receiver_id:receiver, amount:'1000000'}};
 const threatFeed = {schemaVersion:1, entries:[{network:'mainnet', accountId:receiver, status:'verified', evidenceUrl:'https://example.invalid/synthetic-fixture-only'}]};
 let signerCalls = 0;
