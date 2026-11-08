@@ -294,6 +294,7 @@ These are implemented accessibility features, not a claim of certified WCAG conf
 
 ## Repository map
 
+<<<<<<< Updated upstream
 | Path | Purpose |
 |---|---|
 | `app.py` | Python standard-library HTTP server and NEAR scan API. |
@@ -306,6 +307,17 @@ These are implemented accessibility features, not a claim of certified WCAG conf
 | `e2e/` | Playwright browser acceptance tests, including optional live chain scan. |
 | `.github/ISSUE_TEMPLATE/report-counterparty.yml` | Evidence-backed counterparty report intake form. |
 | `Dockerfile`, `compose.yaml`, `render.yaml` | Container and deployment configuration. |
+=======
+### What the current demo shows
+
+The 1:52.7 submission video combines two screen recordings captured November 4, 2026. The first shows a finalized Mainnet scan, its RPC source and block reference, one Full-Access key, and the baseline-review report. The second pins `wrap.near`, displays 185,625 returned code bytes and the SHA-256 digest, and shows finalized block provenance in the baseline-comparison view. The inspected account had no Function-Call key, so the contract was added through **Additional contracts to pin**. The video demonstrates a code digest and comparison workflow; it does not show a code-change event. It also does not show an AI agent using the account, a real threat-feed match, or a live agent signer being blocked. A Full-Access key on the inspected account is evidence of that permission on that account; it is not evidence that the key was misused or delegated to an agent.
+
+The narration identifies NEAR Mainnet as the source of the on-chain permission data and names the NEAR HACKATHON AI Security & Defense track. The combined video is ready for the demo post; a public post has not yet been published. The hackathon guide requires the demo post to include video or screenshots and a complete action/result; it does not state a maximum video duration. The post must say the project was built at NEAR HACKATHON, tag `@NEARProtocol`, and include `#NEARHackathon`.
+
+Judges and users can try contract digesting in the live dashboard with any deployed Mainnet contract they are permitted to inspect. Open the dashboard, enter the account to monitor, put the contract account ID in **Additional contracts to pin**, and select **Read finalized state**. Review the observed code digest, select **Approve this as baseline**, then read again to compare the current digest with that saved baseline. The contract read is pinned to the finalized block used for the key snapshot. Baseline and history are saved in that browser's local storage. The submission video demonstrates this flow with `wrap.near`; no contract change is needed to see a valid digest comparison.
+
+To demonstrate code drift, only compare after the contract owner authorizes a specific code change. To demonstrate agent enforcement, integrate a Function-Call signer adapter and route every agent signing request through `guardedAgentCall`; show the returned decision and confirm a blocked request never calls the signer. The isolated guard test is not a substitute for this live integration test.
+>>>>>>> Stashed changes
 
 ## NEAR references
 
