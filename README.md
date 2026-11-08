@@ -6,17 +6,19 @@
 
 **Try it:** [Live dashboard](https://keyscope.onrender.com/dashboard) · [Project site](https://keyscope.onrender.com)
 
-## Give an agent permission to act. Keep the permission narrow.
+## Problem
 
-An agent with a NEAR key can call a contract. If that key is broader than intended, the contract changes, or a recipient raises a risk signal, an operator needs a chance to catch it **before the signer is called**.
+An AI agent with a NEAR access key can call a contract, but operators may not know when the key permissions or receiver contract have changed since review. A broad key or risky recipient can expose funds before an operator has a chance to respond. Operators need a way to inspect permission drift and assess a proposed call before it reaches the signer, without handing the monitoring tool their wallet keys.
 
-**KeyScope checks those boundaries before an integrated agent call.** It reads finalized NEAR access-key permissions and receiver contract code, compares them with an operator-approved baseline, and gathers counterparty signals. Its deterministic policy returns `ALLOW`, `WARN`, or `BLOCK`:
+## Solution
+
+KeyScope reads finalized NEAR access-key permissions and receiver contract code, compares them with a baseline the operator approves, and gathers counterparty signals for an integrated agent call. Its deterministic policy returns `ALLOW`, `WARN`, or `BLOCK` before the supplied signer callback runs:
 
 - **ALLOW** — the call matches the approved key scope and available checks.
 - **WARN** — a risk signal needs human approval before the signer callback runs.
 - **BLOCK** — the call is refused before the signer callback runs.
 
-Guarded actions require a NEAR Function-Call key scoped to the target contract and method. Full-Access keys are rejected. KeyScope is read-only: it does not hold keys, connect to a wallet, or submit transactions.
+Guarded actions require a NEAR Function-Call key scoped to the target contract and method; Full-Access keys are rejected. NEAR's access-key restrictions provide the on-chain permission boundary, while finalized RPC reads and contract-code digests let the operator compare current state with the approved baseline. KeyScope is read-only: it does not hold keys, connect to a wallet, or submit transactions. The wrapper protects only calls routed through it.
 
 > **What this build demonstrates:** a NEAR permission and code-drift monitor, a deterministic pre-signing policy wrapper, and a reproducible simulated prompt-injection scenario. It does not include a live LLM, production agent runtime, or production wallet adapter. The wrapper is exercised with a supplied test signer callback; live agent-to-wallet integration remains for a consuming application. Threat-feed behavior is tested with synthetic records, and the committed feed is currently empty.
 
