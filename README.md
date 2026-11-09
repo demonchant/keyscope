@@ -6,6 +6,8 @@
 
 **Try it:** [Live dashboard](https://keyscope.onrender.com/dashboard) · [Project site](https://keyscope.onrender.com)
 
+**Demo post:** [Watch on X](https://x.com/thoyourbaby/status/2119701527472541712)
+
 ## Problem
 
 An AI agent with a NEAR access key can call a contract, but operators may not know when the key permissions or receiver contract have changed since review. A broad key or risky recipient can expose funds before an operator has a chance to respond. Operators need a way to inspect permission drift and assess a proposed call before it reaches the signer, without handing the monitoring tool their wallet keys.
@@ -281,7 +283,7 @@ Playwright output, screenshots, traces, and the HTML report are written under `e
 
 The 1:52.7 submission video combines two screen recordings captured November 4, 2026. The first shows a finalized Mainnet scan, its RPC source and block reference, one Full-Access key, and the baseline-review report. The second pins `wrap.near`, displays 185,625 returned code bytes and the SHA-256 digest, and shows finalized block provenance in the baseline-comparison view. The inspected account had no Function-Call key, so the contract was added through **Additional contracts to pin**. The video demonstrates a code digest and comparison workflow; it does not show a code-change event. It also does not show an AI agent using the account, a real threat-feed match, or a live agent signer being blocked. A Full-Access key on the inspected account is evidence of that permission on that account; it is not evidence that the key was misused or delegated to an agent.
 
-The narration identifies NEAR Mainnet as the source of the on-chain permission data and names the NEAR HACKATHON AI Security & Defense track. The post must say the project was built at NEAR HACKATHON, tag `@NEARProtocol`, and include `#NEARHackathon`; confirm its publication status before submission.
+The narration identifies NEAR Mainnet as the source of the on-chain permission data and names the NEAR HACKATHON AI Security & Defense track. The [public demo post on X](https://x.com/thoyourbaby/status/2119701527472541712) includes the project, repository, and video links.
 
 Judges and users can try contract digesting in the live dashboard with a deployed Mainnet contract they are permitted to inspect. Open the dashboard, enter the account to monitor, put the contract account ID in **Additional contracts to pin**, and select **Read finalized state**. Review the observed digest, approve the baseline, then read again to compare. The contract read is pinned to the finalized block used for the key snapshot. An unchanged digest is a valid comparison result.
 
